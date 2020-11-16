@@ -1,0 +1,143 @@
+args = dir_cmdline
+split args, " ", object
+max = int(object(0))
+#include "d3m.hsp"
+#include "MODULE_inim2.hsp"
+#include "EncryptApi.hsp"
+bgscr 0, ginfo(20), ginfo(21)
+title "Render"
+width , , 0, 0
+scr = (ginfo(20)+ginfo(21))
+score = 0
+score1 = 0
+score2 = 0
+score3 = 0
+score4 = 0
+score5 = 0
+value = 0
+screen_x = ginfo(20)
+screen_y = ginfo(21)
+exist "Log.ini"
+if strsize = -1 {
+	exec "Benchmark.exe", 0, "open"
+	end
+} else {
+	INIInit "Log.ini"
+	if INIGet("Param","Next"){} else {exec "Benchmark.exe", 0, "open" : end}
+	if INIGet("Param","res-x"){screen_x = int(refstr)} else {INISet "Param","res-x",""+ginfo(20)}
+	if INIGet("Param","res-y"){screen_y = int(refstr)} else {INISet "Param","res-y",""+ginfo(21)}
+}
+if screen_x <= 0 {
+	screen_x = 1920
+	INISet "Param","res-x","1920"
+} if screen_y <= 0 {
+	screen_y = 1080
+	INISet "Param","res-y","1080"
+}
+if max == 0 {
+	exec "Benchmark.exe", 0, "open"
+	end
+}
+bgscr 0, screen_x, screen_y
+dimtype face, vartype("int"), max
+dimtype x, vartype("int"), max
+dimtype y, vartype("int"), max
+dimtype c, vartype("int"), max
+dimtype off, vartype("int"), max
+randomize
+count = 0
+font "Arial", (ginfo(13)/20)/2, 16
+gsel 0, 2
+*main
+	count++
+	getkey pageup, 33
+	redraw 1 : await 1 : redraw 0
+	color : boxf
+	if pageup == 1 {
+		INISet "Param","Next","ended"
+		INISet "Score",""+max,""+score
+		exec "Benchmark.exe", 0, "open"
+		end
+	}
+	repeat max
+		if face(cnt) == null {
+			face(cnt) = rnd(3)
+			x(cnt) = rnd(ginfo(12))
+			y(cnt) = rnd(ginfo(13))
+			c(cnt) = rnd(192)
+			off(cnt) = rnd(3)
+		}
+		if face(cnt) == 2 {
+			y(cnt)--
+			x(cnt)-=off(cnt)
+		} else : if face(cnt) == 1 {
+			y(cnt)--
+			x(cnt)+=off(cnt)
+		}
+		if off(cnt) == 0 {
+			y(cnt)--
+		}
+		hsvcolor c(cnt), value, value : circle x(cnt)-5, y(cnt)-5, x(cnt)+5, y(cnt)+5
+//		pos x(cnt), y(cnt)+5 : mes "ID: "+cnt+"\nFacing: "+face(cnt)+"\nOffset: "+off(cnt)+"\nX: "+x(cnt)
+		if x(cnt) >= ginfo(12) {
+			face(cnt) = 2
+		}
+		if x(cnt) <= 0 {
+			face(cnt) = 1
+		}
+		if y(cnt) <= 0 {
+			face(cnt) = null
+		}
+	loop
+	color 84, 84, 80 : boxf 5, 5, 5+(ginfo(12)/3), 5+(ginfo(13)/20)
+	fps=d3getfps()
+	color 0, 255, 0 : pos 10, 10 : mes "FPS: "+fps+", Objects: "+max+", Score: "+score
+	if count > 100 {
+		score+=fps
+	}
+	if scr != (ginfo(20)+ginfo(21)) {
+		INISet "Param","Next","100"
+		INISet "Score","100","0"
+		INISet "Score","500","0"
+		INISet "Score","1000","0"
+		INISet "Score","5000","0"
+		INISet "Score","10000","0"
+		INISet "Score","20000","0"
+		exec "Benchmark.exe", 0, "open"
+		end
+	}
+	if count == 700 {
+		if max == 100 {
+			INISet "Param","Next","500"
+		} else : if max == 500 {
+			INISet "Param","Next","1000"
+		} else : if max == 1000 {
+			INISet "Param","Next","5000"
+		} else : if max == 5000 {
+			INISet "Param","Next","10000"
+		} else : if max == 10000 {
+			INISet "Param","Next","20000"
+		} else : if max == 20000 {
+			
+			INISet "Param","Next","ended"
+		}
+		INISet "Score",""+max,""+score
+		if max == 20000 {
+			if INIGet("Score","100"){score1 = int(refstr)}
+			if INIGet("Score","500"){score2 = int(refstr)}
+			if INIGet("Score","1000"){score3 = int(refstr)}
+			if INIGet("Score","5000"){score4 = int(refstr)}
+			if INIGet("Score","10000"){score5 = int(refstr)}
+			public_key = ""+(score1+score2+score3+score4+score5+score+screen_x)
+			ob public_key
+			INISet "Param","Alg",""+refstr
+		}
+		exec "Benchmark.exe", 0, "open"
+		end
+	}
+	if count <= 50 {
+		value+=4
+	} else : if count >= 650 {
+		value-=4
+	}
+	goto *main

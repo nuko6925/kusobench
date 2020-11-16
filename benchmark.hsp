@@ -1,0 +1,364 @@
+#packopt runtime "hsp3mt.hrt"
+#runtime "hsp3mt"
+#include "MODULE_inim2.hsp"
+#include "EncryptApi.hsp"
+#include "hsp3utf.as"
+#include "advapi32.as"
+#define HKEY_LOCAL_MACHINE	$80000002
+#define KEY_QUERY_VALUE	$00000001
+long=128
+sdim processor.getName, long
+RegOpenKeyEx HKEY_LOCAL_MACHINE,("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),0,KEY_QUERY_VALUE,varptr(hkey)
+RegQueryValueEx hKey,"ProcessorNameString",0,0,varptr(processor.getName),varptr(long)
+RegCloseKey hKey
+screen 0, 1280, 720
+width , , 0, 0
+gsel 0, 2
+title "KusoBench"
+score1 = 0
+score2 = 0
+score3 = 0
+score4 = 0
+score5 = 0
+score6 = 0
+nex = 100
+ver = "INVALID"
+resolutions = 3
+created = 0
+screen_x = ginfo(20)
+screen_y = ginfo(21)
+
+exist "Log.ini"
+if strsize == -1 {
+	INIInit "Log.ini"
+	INISet "Param","Next","100"
+	INISet "Param","User","Guest"
+	uuid_gen
+	INISet "Param","Pwd",""+refstr
+	INISet "Param","res-c","4"
+	INISet "Param","res-x",""+ginfo(20)
+	INISet "Param","res-y",""+ginfo(21)
+	await 1000
+	exec "Benchmark.exe", 0, "open"
+	end
+} else {
+	INIInit "Log.ini"
+	if INIGet("Param","Next"){nex = int(refstr)} else {INISet "Param","Next","100"}
+	if INIGet("Score","100"){score1 = int(refstr)} else {INISet "Score","100","0"}
+	if INIGet("Score","500"){score2 = int(refstr)} else {INISet "Score","500","0"}
+	if INIGet("Score","1000"){score3 = int(refstr)} else {INISet "Score","1000","0"}
+	if INIGet("Score","5000"){score4 = int(refstr)} else {INISet "Score","5000","0"}
+	if INIGet("Score","10000"){score5 = int(refstr)} else {INISet "Score","10000","0"}
+	if INIGet("Score","20000"){score6 = int(refstr)} else {INISet "Score","20000","0"}
+	if INIGet("Param","Alg"){hash_key = refstr} else {INISet "Param","Alg","0"}
+	if INIGet("Param","User"){user = refstr} else {INISet "Param","User","Guest"}
+	if INIGet("Param","Pwd"){pass = refstr} else {uuid_gen : INISet "Param","Pwd",""+refstr}
+	if INIGet("Param","res-c"){resolutions = int(refstr)} else {INISet "Param","res-c","3" : INISet "Param","res-x","1920" : INISet "Param","res-y","1080"}
+	if INIGet("Param","res-x"){screen_x = int(refstr)}
+	if INIGet("Param","res-y"){screen_y = int(refstr)}
+}
+if screen_x <= 0 {
+	screen_x = 1920
+	INISet "Param","res-x","1920"
+} if screen_y <= 0 {
+	screen_y = 1080
+	INISet "Param","res-y","1080"
+} if resolutions <= -1 {
+	resolutions = 3
+	INISet "Param","res-c","3"
+} if resolutions >= 6 {
+	resolutions = 3
+	INISet "Param","res-c","3"
+}
+if user != null {
+	if strlen(user) > 16 {
+		user = "お前"
+	}
+	passgen user
+	if refstr != pass {
+		user = "お前"
+	}
+}
+color : boxf
+color 255, 255, 255
+font "Arial", 64, 17
+boxf 5, 5, 600, ginfo(13)-5
+color : boxf 20, 20, 580, ginfo(13)-20
+if nex == 0 {
+	raw_key = ""+(score1+score2+score3+score4+score5+score6+screen_x)
+	ob raw_key
+	if hash_key == refstr {
+		ver = "VALID"
+	} else {
+		ver = "INVALID"
+	}
+	objsize 75, 30
+	pos 600-95, 670
+	button goto "ReRun", *rerun
+	pos ginfo(12)-95, 630 : button goto "Option", *option
+	nex = 30000
+}
+color 255, 255, 255
+if nex == 100 {
+	color 247, 165, 0
+	pos 30, 30 : mes "Test1: running..."
+} else {
+	color 0, 255, 0
+	pos 30, 30 : mes "Test1: "+strf("%7d", score1)
+}
+if nex == 500 {
+	color 247, 165, 0
+	pos 30, 128 : mes "Test2: running..."
+} else {
+	if nex <= 100 {
+		color 0, 230, 230
+		pos 30, 128 : mes "Test2: waiting..."
+	} else {
+		color 0, 255, 0
+		pos 30, 128 : mes "Test2: "+strf("%7d", score2)
+	}
+}
+if nex == 1000 {
+	color 247, 165, 0
+	pos 30, 226 : mes "Test3: running..."
+} else {
+	if nex <= 500 {
+		color 0, 230, 230
+		pos 30, 226 : mes "Test3: waiting..."
+	} else {
+		color 0, 255, 0
+		pos 30, 226 : mes "Test3: "+strf("%7d", score3)
+	}
+}
+if nex == 5000 {
+	color 247, 165, 0
+	pos 30, 324 : mes "Test4: running..."
+} else {
+	if nex <= 1000 {
+		color 0, 230, 230
+		pos 30, 324 : mes "Test4: waiting..."
+	} else {
+		color 0, 255, 0
+		pos 30, 324 : mes "Test4: "+strf("%7d", score4)
+	}
+}
+if nex == 10000 {
+	color 247, 165, 0
+	pos 30, 422 : mes "Test5: running..."
+} else : if nex == 20000 {
+	color 247, 165, 0
+	pos 30, 422 : mes "Test5: running..."
+} else {
+	if nex <= 5000 {
+		color 0, 230, 230
+		pos 30, 422 : mes "Test5: waiting..."
+	} else {
+		color 0, 255, 0
+		pos 30, 422 : mes "Test5: "+strf("%7d", score5+score6)
+	}
+}
+//mes "Test6: "+score6
+pos 30, 520 : mes "Score: "+strf("%7d", ((score1+score2+score3+score4+score5+score6)/6))
+color 255, 255, 255
+boxf 20, 100, 580, 100+15
+boxf 20, 198, 580, 198+15
+boxf 20, 296, 580, 296+15
+boxf 20, 394, 580, 394+15
+boxf 20, 492, 580, 492+15
+boxf 20, 590, 580, 590+15
+font "Arial", 32, 17
+pos 30, 618 : mes "CPU: "+processor.getName
+mes "Display: "+screen_x+"x"+screen_y
+
+sysfont
+color : boxf 600, 5, ginfo(12), ginfo(13)-5
+color 100, 100, 100 : boxf 605, 5, ginfo(12)-5, ginfo(13)-5
+half = (ginfo(13)-10)/2
+color 255, 255, 255 : line 605, half+5, ginfo(12)-125, half+5
+pos ginfo(12)-120, half : mes "100000"
+pos ginfo(12)-120, ginfo(13)-25 : mes "0"
+pos ginfo(12)-120, 5 : mes "200000"
+line ginfo(12)-125, 5, ginfo(12)-125, ginfo(13)-5
+line 605, 5, 605, ginfo(13)-5
+//varidate
+if ver == "VALID" {
+	font "Arial", 160, 19
+	color 184, 255, 186 : pos 650, ginfo(13)-200 : mes "VALID"
+	pos ginfo(12)-95, 670 : button goto "Share", *share
+} else {
+	font "Arial", 128, 19
+	color 255, 154, 132 : pos 630, ginfo(13)-200 : mes "INVALID"
+}
+sysfont
+//Dev's PC
+res = screen_x
+orig_score = 0
+if res == 2560 {
+	orig_score = 29788
+} else : if res == 1920 {
+	orig_score = 47134
+} else : if res == 1280 {
+	orig_score = 68784
+} else : if res == 3840 {
+	orig_score = 19224
+} else : if res == 720 {
+	orig_score = 62828
+} else : if res == 7680 {
+	orig_score = 10405
+} else : if res = 15360 {
+	orig_score = 3176
+} else : if res = 480 {
+	orig_score = 63749
+} else : if res = 640 {
+	orig_score = 62986
+} else : if res = 320 {
+	orig_score = 83498
+} else : if res = 160 {
+	orig_score = 85023
+}
+x1 = double(orig_score.0)/double(200000.0)
+y1 = (double(710)*x1)
+z1 = (710-int(y1))+5
+
+color 128, 0, 0 : boxf 700, z1, 750, ginfo(13)-5
+line 605, z1, ginfo(12)-126, z1
+color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+res+"px"
+
+//User's PC
+x2 = double(((score1+score2+score3+score4+score5+score6)/6))/double(200000.0)
+y2 = (double(710)*x2)
+z2 = (710-int(y2))+5
+
+color 0, 255, 0 : boxf 950, z2, 1000, ginfo(13)-5
+line 605, z2, ginfo(12)-126, z2
+if user != null {
+	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-30 : line 1050, z2-30, 1060, z2-30 : pos 1065, z2-40 : mes ""+user+"のPC\n"+((score1+score2+score3+score4+score5+score6)/6)
+} else {
+	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-30 : line 1050, z2-30, 1060, z2-30 : pos 1065, z2-40 : mes "お前のPC\n"+((score1+score2+score3+score4+score5+score6)/6)
+}
+//
+if nex == 100 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+if nex == 500 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+if nex == 1000 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+if nex == 5000 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+if nex == 10000 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+if nex == 20000 {
+	await 2000
+	exec "Render.exe", 0, "open"
+	end
+}
+stop
+*rerun
+	gsel 0, -1
+	INISet "Param","Next","100"
+	INISet "Score","100","0"
+	INISet "Score","500","0"
+	INISet "Score","1000","0"
+	INISet "Score","5000","0"
+	INISet "Score","10000","0"
+	INISet "Score","20000","0"
+	INISet "Param","Alg","0"
+	await 1000
+	exec "Render.exe", 0, "open"
+	end
+*share
+	exec "Share.exe", 0, "open"
+	end
+	stop
+*option
+	gsel 0, -1
+	if created != 1 {
+		bgscr 1, 1280, 720
+		gsel 1, 2
+		width , , 0, 0
+		color 59, 59, 59 : boxf
+		objsize 1280, 720
+		pos 0, 34
+		listbox resolutions, 100, "15360x8640(16K)\n7680x4320(8K)\n3840x2160(4K)\n2560x1440(WQHD)\n1920x1080(FHD)\n1280x720(HD)\n800x600(SVGA)\n720x480(SD)\n640x480(VGA)\n480x320(HVGA)\n320x240(QVGA)\n160x120(QQVGA)"
+		objsize 75, 30
+		pos 5, 5 : button goto "Cancel", *cancel
+		pos 1280-95, 5 : button goto "Save", *save
+		created = 1
+	} else {
+		gsel 1, 1
+	}
+	stop
+*cancel
+	gsel 1, -1
+	gsel 0, 2
+	stop
+*save
+	gsel 1, -1
+	gsel 0, 2
+	if resolutions == 0 {
+		res_x = 15360
+		res_y = 8640
+	}
+	if resolutions == 1 {
+		res_x = 7680
+		res_y = 4320
+	}
+	if resolutions == 2 {
+		res_x = 3840
+		res_y = 2160
+	}
+	if resolutions == 3 {
+		res_x = 2560
+		res_y = 1440
+	}
+	if resolutions == 4 {
+		res_x = 1920
+		res_y = 1080
+	}
+	if resolutions == 5 {
+		res_x = 1280
+		res_y = 720
+	}
+	if resolutions == 6 {
+		res_x = 800
+		res_y = 600
+	}
+	if resolutions == 7 {
+		res_x = 720
+		res_y = 480
+	}
+	if resolutions == 8 {
+		res_x = 640
+		res_y = 480
+	}
+	if resolutions == 9 {
+		res_x = 480
+		res_y = 320
+	}
+	if resolutions == 10 {
+		res_x = 320
+		res_y = 240
+	}
+	if resolutions == 11 {
+		res_x = 160
+		res_y = 120
+	}
+	
+	INISet "Param","res-x",""+res_x
+	INISet "Param","res-y",""+res_y
+	INISet "Param","res-c",""+resolutions
