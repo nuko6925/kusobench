@@ -168,8 +168,11 @@ boxf 20, 492, 580, 492+15
 boxf 20, 590, 580, 590+15
 font "Arial", 32, 17
 pos 30, 618 : mes "CPU: "+processor.getName
-mes "Display: "+screen_x+"x"+screen_y
-
+if screen_x == 1 {
+	mes "Mode: CLI"
+} else {
+	mes "Display: "+screen_x+"x"+screen_y
+}
 sysfont
 color : boxf 600, 5, ginfo(12), ginfo(13)-5
 color 100, 100, 100 : boxf 605, 5, ginfo(12)-5, ginfo(13)-5
@@ -205,16 +208,18 @@ if res == 2560 {
 	orig_score = 62828
 } else : if res == 7680 {
 	orig_score = 10405
-} else : if res = 15360 {
+} else : if res == 15360 {
 	orig_score = 3176
-} else : if res = 480 {
+} else : if res == 480 {
 	orig_score = 63749
-} else : if res = 640 {
+} else : if res == 640 {
 	orig_score = 62986
-} else : if res = 320 {
+} else : if res == 320 {
 	orig_score = 83498
-} else : if res = 160 {
+} else : if res == 160 {
 	orig_score = 85023
+} else : if res == 1 {
+	orig_score = 93132
 }
 x1 = double(orig_score.0)/double(200000.0)
 y1 = (double(710)*x1)
@@ -222,7 +227,11 @@ z1 = (710-int(y1))+5
 
 color 128, 0, 0 : boxf 700, z1, 750, ginfo(13)-5
 line 605, z1, ginfo(12)-126, z1
-color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+res+"px"
+if res == 1 {
+	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\nMode: CLI"
+} else {
+	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+res+"px"
+}
 
 //User's PC
 x2 = double(((score1+score2+score3+score4+score5+score6)/6))/double(200000.0)
@@ -294,7 +303,7 @@ stop
 		color 59, 59, 59 : boxf
 		objsize 1280, 720
 		pos 0, 34
-		listbox resolutions, 100, "15360x8640(16K)\n7680x4320(8K)\n3840x2160(4K)\n2560x1440(WQHD)\n1920x1080(FHD)\n1280x720(HD)\n800x600(SVGA)\n720x480(SD)\n640x480(VGA)\n480x320(HVGA)\n320x240(QVGA)\n160x120(QQVGA)"
+		listbox resolutions, 100, "15360x8640(16K)\n7680x4320(8K)\n3840x2160(4K)\n2560x1440(WQHD)\n1920x1080(FHD)\n1280x720(HD)\n800x600(SVGA)\n720x480(SD)\n640x480(VGA)\n480x320(HVGA)\n320x240(QVGA)\n160x120(QQVGA)\nCommand Line Interface(CLI)"
 		objsize 75, 30
 		pos 5, 5 : button goto "Cancel", *cancel
 		pos 1280-95, 5 : button goto "Save", *save
@@ -357,6 +366,10 @@ stop
 	if resolutions == 11 {
 		res_x = 160
 		res_y = 120
+	}
+	if resolutions == 12 {
+		res_x = 1
+		res_y = 1
 	}
 	
 	INISet "Param","res-x",""+res_x
