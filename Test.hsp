@@ -1,0 +1,49 @@
+#include "RepApi.hsp"
+time = 0
+ps = "Get-WmiObject -Class Win32_Processor | Format-List CurrentClockSpeed"
+onexit *exit
+exist "Frequency.ps1"
+if strsize != -1 {
+	delete "Frequency.ps1"
+}
+exist "output.txt"
+if strsize != -1 {
+	delete "output.txt"
+}
+notesel ps
+notesave "Frequency.ps1"
+
+exec "cmd /c powershell -ExecutionPolicy RemoteSigned -File Frequency.ps1 > output.txt"
+
+repeat
+	exist "output.txt"
+	if strsize != -1 {
+		break
+	}
+	await 20
+	time++
+loop
+mes "took "+(20*time)+"ms"
+await 2500
+exist "output.txt"
+if strsize != -1 {
+	notesel freq
+	noteload "output.txt"
+	noteget result, 2
+	clock = str_replace("CurrentClockSpeed : ", "", result)
+	mes clock+"MHz"
+} else {
+	mes "fail to load"
+}
+stop
+
+*exit
+	exist "Frequency.ps1"
+	if strsize != -1 {
+		delete "Frequency.ps1"
+	}
+	exist "output.txt"
+	if strsize != -1 {
+		delete "output.txt"
+	}
+	end
