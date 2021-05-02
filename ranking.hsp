@@ -1,0 +1,205 @@
+#include "MODULE_inim2.hsp"
+#include "RepApi.hsp"
+#include "GetApi.hsp"
+#define adTypeBinary            1
+#define adSaveCreateNotExist    1
+#define adSaveCreateOverWrite   2
+#define  CRLF   "\r\n"
+#define  LF     "\r"
+#define  CR     "\n"
+randomize
+screen_x = ginfo(20)
+screen_y = ginfo(21)
+adblock = 0
+onexit *exit
+exist "Log.ini"
+if strsize == -1 {
+	dialog "File 'Log.ini' not found"
+	end
+} else {
+	INIInit "Log.ini"
+	if INIGet("Param","res-x"){screen_x = int(refstr)}
+	if INIGet("Param","res-y"){screen_y = int(refstr)}
+	if INIGet("Param","adblock"){adblock = refstr} else {INISet "Param","adblock","0"}
+}
+if screen_x == 1 {
+	title "KusoBench Ranking (CLI)"
+	console = "KusoBench Ranking (CLI)\n"
+} else {
+	title "KusoBench Ranking ("+screen_x+"x"+screen_y+")"
+	console = "KusoBench Ranking ("+screen_x+"x"+screen_y+")\n"
+}
+screen 0, 1280, 720
+color 59, 59, 59 : boxf
+mesbox console, 1150, 720, 4
+*main
+api_url = "https://xn--8dr019o.monster/api/kusobench/?do=getscore&display_x="+screen_x+"&display_y="+screen_y+"&rows=999"
+Get_Req(api_url)
+console = console+"Connecting...\n"
+objprm 0, console
+result = str_replace("\n", "", refstr)
+split result, ";", head
+repeat (stat-1)
+	split head(cnt), ",", body
+	if cnt == 0 {
+		console = console+"Number of data: "+head(0)+"\n"
+	}
+	if cnt >= 1 {
+		ram = int(double(body(2)) + 0.5)
+		processor = str_replace("%20", " ", body(1))
+		cpu = str_replace("            ", "", processor)
+		cpu = str_replace("         ", "", cpu)
+		val = instr(cpu, , "___")
+		if val != -1 {
+			split cpu, "___", cpu, user
+		} else {
+			user = "Unknown"
+		}
+		console = console+"#"+cnt+" "+cpu+"\n"
+		score = int(body(11))
+		x1 = double(score)/double(200000.0)
+		y1 = x1*double(100.0)
+		z1 = int(y1)
+		graph = ""
+		repeat z1
+			graph = graph+"*"
+		loop
+		graph = graph+"   ("+body(11)+")"+"\nUser: "+user+"\n\n"
+		console = console+graph
+		objprm 0, console
+	}
+loop
+pos 1200, 680
+button "Download", *download
+pos 1200, 640
+if screen_x == 1 {
+	button "CLI", *res
+} else {
+	button ""+screen_x+"x"+screen_y, *res
+}
+stop
+*download
+	ram = 0
+	processor = ""
+	cpu = ""
+	score = 0
+	x1 = 0.0
+	y1 = 0.0
+	z1 = 0
+	graph = ""
+	api_url = ""
+	result = ""
+	clrobj 1
+	clrobj 2
+	if screen_x == 1 {
+		console = "KusoBench Ranking (CLI)\n"
+		title "KusoBench Ranking (CLI)"
+	} else {
+		console = "KusoBench Ranking ("+screen_x+"x"+screen_y+")\n"
+		title "KusoBench Ranking ("+screen_x+"x"+screen_y+")"
+	}
+	objprm 0, console
+	goto *main
+*res
+	if screen_x == 1 {
+		screen_x = 15360
+		screen_y = 8640
+	}
+	else : if screen_x == 160 {
+		screen_x = 1
+		screen_y = 1
+	}
+	else : if screen_x == 320 {
+		screen_x = 160
+		screen_y = 120
+	}
+	else : if screen_x == 480 {
+		screen_x = 320
+		screen_y = 240
+	}
+	else : if screen_x == 640 {
+		screen_x = 480
+		screen_y = 320
+	}
+	else : if screen_x == 720 {
+		screen_x = 640
+		screen_y = 480
+	}
+	else : if screen_x == 800 {
+		screen_x = 720
+		screen_y = 480
+	}
+	else : if screen_x == 1280 {
+		screen_x = 800
+		screen_y = 600
+	}
+	else : if screen_x == 1920 {
+		screen_x = 1280
+		screen_y = 720
+	}
+	else : if screen_x == 2560 {
+		screen_x = 1920
+		screen_y = 1080
+	}
+	else : if screen_x == 3840 {
+		screen_x = 2560
+		screen_y = 1440
+	}
+	else : if screen_x == 7680 {
+		screen_x = 3840
+		screen_y = 2160
+	}
+	else : if screen_x == 15360 {
+		screen_x = 7680
+		screen_y = 4320
+	}
+	else {
+		screen_x = 1920
+		screen_y = 1080
+	}
+	if screen_x == 1 {
+		objprm 2, "CLI"
+	} else {
+		objprm 2, ""+screen_x+"x"+screen_y
+	}
+	stop
+*exit
+	if adblock == 2 {
+		gsel 0, -1
+		bgscr 1, ginfo(20)/4, ginfo(21)/4
+		width , , ginfo(20)/3, ginfo(21)/3
+		title "Ç®ã‡ó~ÇµÇ¢Ç»(¡◊Ø"
+		objsize 150
+		color 59, 59, 59 : boxf
+		color 255, 255, 255 : pos 5, 5 : mes "äÒïtÇµÇƒÇ≠ÇÍÇÈÇ∆äÇµÇ¢Ç»Å`Ç¡Çƒ"
+		color 128, 128, 128 : mes "\nThis software is provided by @Akari_playApex.\nModification of this software is strongly prohibited.\nThanks for @yamad_linuxer\nThis software was created with HSP 3.51\n\n(c)XI 2020-2021"
+		pos ginfo(12)/2 - 75, ginfo(13)-60 : button "äÒïtÇµÇ‹Ç∑", *donate
+		pos ginfo(12)/2 - 75, ginfo(13)-35 : button "ç°å„ï\é¶ÇµÇ»Ç¢", *adb
+		await 2000
+		end
+	}
+	ads = rnd(100)
+	if ads == 45 {
+		if adblock == 3 {
+			end
+		}
+		gsel 0, -1
+		bgscr 1, ginfo(20)/8, ginfo(21)/8
+		width , , ginfo(20)/3, ginfo(21)/3
+		title "Ç®ã‡ó~ÇµÇ¢Ç»(¡◊Ø"
+		objsize 150
+		color 59, 59, 59 : boxf
+		color 255, 255, 255 : pos 5, 5 : mes "äÒïtÇµÇƒÇ≠ÇÍÇÈÇ∆äÇµÇ¢Ç»Å`Ç¡Çƒ"
+		color 128, 128, 128 : mes "\nThis software is provided by @Akari_playApex.\nModification of this software is strongly prohibited.\nThanks for @yamad_linuxer\nThis software was created with HSP 3.51\n\n(c)XI 2020-2021"
+		pos ginfo(12)/2 - 75, ginfo(13)-60 : button "äÒïtÇµÇ‹Ç∑", *donate
+		pos ginfo(12)/2 - 75, ginfo(13)-35 : button "ç°å„ï\é¶ÇµÇ»Ç¢", *adb
+		await 3000
+	}
+	end
+
+*donate
+	exec "https://kyash.me/payments/XrnV3bltaUnGj8ViUbV3QB4Xk4LI", 16
+	end
+*adb
+	INISet "Param","adblock","3"
+	end
