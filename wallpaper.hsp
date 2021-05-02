@@ -3,6 +3,7 @@
 #include "EncryptApi.hsp"
 #include "RepApi.hsp"
 bgscr 0, ginfo(20), ginfo(21)
+color : boxf
 title "Render"
 width , , 0, 0
 scr = (ginfo(20)+ginfo(21))
