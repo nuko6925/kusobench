@@ -1,9 +1,7 @@
-args = dir_cmdline
-split args, " ", object
-max = int(object(0))
 #include "d3m.hsp"
 #include "MODULE_inim2.hsp"
 #include "EncryptApi.hsp"
+#include "RepApi.hsp"
 bgscr 0, ginfo(20), ginfo(21)
 title "Render"
 width , , 0, 0
@@ -17,15 +15,19 @@ score5 = 0
 value = 0
 screen_x = ginfo(20)
 screen_y = ginfo(21)
+qmode = "Off"
+ps = "Get-WmiObject -Class Win32_Processor | Format-List CurrentClockSpeed"
 exist "Log.ini"
 if strsize = -1 {
 	exec "Benchmark.exe", 0, "open"
 	end
 } else {
 	INIInit "Log.ini"
-	if INIGet("Param","Next"){} else {exec "Benchmark.exe", 0, "open" : end}
+	if INIGet("Param","Next"){max = int(refstr)} else {exec "Benchmark.exe", 0, "open" : end}
+	if INIGet("Param","res-c"){resolutions = int(refstr)}
 	if INIGet("Param","res-x"){screen_x = int(refstr)} else {INISet "Param","res-x",""+ginfo(20)}
 	if INIGet("Param","res-y"){screen_y = int(refstr)} else {INISet "Param","res-y",""+ginfo(21)}
+	if INIGet("Param","quick"){qmode = refstr} else {INISet "Param","quick","Off"}
 }
 if screen_x <= 0 {
 	screen_x = 1920
@@ -38,12 +40,48 @@ if max == 0 {
 	exec "Benchmark.exe", 0, "open"
 	end
 }
+if max == 100 {
+	exist "Frequency.ps1"
+	if strsize != -1 {
+		delete "Frequency.ps1"
+	}
+	exist "output.txt"
+	if strsize != -1 {
+		delete "output.txt"
+	}
+	notesel ps
+	notesave "Frequency.ps1"
+	exec "cmd /c powershell -ExecutionPolicy RemoteSigned -File Frequency.ps1 > output.txt"
+	await 2500
+	exist "output.txt"
+	if strsize != -1 {
+		notesel freq
+		noteload "output.txt"
+		noteget result, 2
+		clock = str_replace("CurrentClockSpeed : ", "", result)
+		ob clock
+		INISet "Param","freq",""+refstr
+	}
+	exist "Frequency.ps1"
+	if strsize != -1 {
+		delete "Frequency.ps1"
+	}
+	exist "output.txt"
+	if strsize != -1 {
+		delete "output.txt"
+	}
+}
+if screen_x == 1 {
+	goto *cli
+}
 bgscr 0, screen_x, screen_y
+color : boxf
 dimtype face, vartype("int"), max
 dimtype x, vartype("int"), max
 dimtype y, vartype("int"), max
 dimtype c, vartype("int"), max
 dimtype off, vartype("int"), max
+dimtype updown, vartype("int"), max
 randomize
 count = 0
 font "Arial", (ginfo(13)/20)/2, 16
@@ -51,7 +89,7 @@ gsel 0, 2
 *main
 	count++
 	getkey pageup, 33
-	redraw 1 : await 1 : redraw 0
+	redraw 1 : await 0 : redraw 0
 	color : boxf
 	if pageup == 1 {
 		INISet "Param","Next","ended"
@@ -66,17 +104,35 @@ gsel 0, 2
 			y(cnt) = rnd(ginfo(13))
 			c(cnt) = rnd(192)
 			off(cnt) = rnd(3)
+			updown(cnt) = rnd(2)
 		}
 		if face(cnt) == 2 {
-			y(cnt)--
-			x(cnt)-=off(cnt)
+			x(cnt)-off(cnt)
 		} else : if face(cnt) == 1 {
-			y(cnt)--
-			x(cnt)+=off(cnt)
+			x(cnt)+off(cnt)
 		}
-		if off(cnt) == 0 {
+		if updown(cnt) == 0 {
 			y(cnt)--
+		} else : if updown(cnt) == 1 {
+			y(cnt)++
 		}
+/*		pget x(cnt), y(cnt)
+		if ginfo_r != 0 {
+			if ginfo_g != 0 {
+				if ginfo_b != 0 {
+					if face(cnt) == 2 {
+						face(cnt) = 1
+					} else : if face(cnt) == 1 {
+						face(cnt) = 2
+					}
+					if updown(cnt) == 0 {
+						updown(cnt) = 1
+					} else : if updown(cnt) == 1 {
+						updown(cnt) = 0
+					}
+				}
+			}
+		}*/
 		hsvcolor c(cnt), value, value : circle x(cnt)-5, y(cnt)-5, x(cnt)+5, y(cnt)+5
 //		pos x(cnt), y(cnt)+5 : mes "ID: "+cnt+"\nFacing: "+face(cnt)+"\nOffset: "+off(cnt)+"\nX: "+x(cnt)
 		if x(cnt) >= ginfo(12) {
@@ -86,15 +142,23 @@ gsel 0, 2
 			face(cnt) = 1
 		}
 		if y(cnt) <= 0 {
-			face(cnt) = null
+			updown(cnt) = 1
+		}
+		if y(cnt) >= ginfo(13) {
+			updown(cnt) = 0
 		}
 	loop
 	color 84, 84, 80 : boxf 5, 5, 5+(ginfo(12)/3), 5+(ginfo(13)/20)
 	fps=d3getfps()
-	color 0, 255, 0 : pos 10, 10 : mes "FPS: "+fps+", Objects: "+max+", Score: "+score
 	if count > 100 {
+		if qmode == "On" {
+			score = fps*598
+			count = 700
+		}
 		score+=fps
 	}
+	prog=(double(count)/700.0)*100.0
+	color 0, 255, 0 : pos 10, 10 : mes "FPS: "+strf("%04d", fps)+", Objects: "+max+", Progress: "+strf("%3.2f", prog)+"%"
 	if scr != (ginfo(20)+ginfo(21)) {
 		INISet "Param","Next","100"
 		INISet "Score","100","0"
@@ -141,3 +205,150 @@ gsel 0, 2
 		value-=4
 	}
 	goto *main
+*cli
+	log = ""
+	screen 0, 640, 360
+	color : boxf
+	max = 100
+	mesbox log, 640, 360, 0
+	goto *render
+	stop
+*render
+	if log != log2 {
+		objprm 0, log
+	}
+	
+	await tick
+	log2 = log
+	
+	score = 0
+	if score1 != 0 {
+		max == 500
+	}
+	if score2 != 0 {
+		max == 1000
+	}
+	if score3 != 0 {
+		max == 5000
+	}
+	if score4 != 0 {
+		max == 10000
+	}
+	if score5 != 0 {
+		max == 20000
+	}
+	
+	if max == 100 {
+		score1 = 0
+	}
+	if max == 500 {
+		score2 = 0
+	}
+	if max == 1000 {
+		score3 = 0
+	}
+	if max == 5000 {
+		score4 = 0
+	}
+	if max == 10000 {
+		score5 = 0
+	}
+	if max == 20000 {
+		score6 = 0
+	}
+	dimtype face, vartype("int"), max
+	dimtype x, vartype("int"), max
+	dimtype y, vartype("int"), max
+	dimtype c, vartype("int"), max
+	dimtype off, vartype("int"), max
+	randomize
+	count = 0
+	goto *rend
+	stop
+*rend
+	count++
+	await 1
+	repeat max
+		if face(cnt) == null {
+			face(cnt) = rnd(3)
+			x(cnt) = rnd(1920)
+			y(cnt) = rnd(1080)
+			c(cnt) = rnd(192)
+			off(cnt) = rnd(3)
+			updown(cnt) = rnd(2)
+		}
+		if face(cnt) == 2 {
+			x(cnt)-=off(cnt)
+		} else : if face(cnt) == 1 {
+			x(cnt)+=off(cnt)
+		}
+		if updown(cnt) == 0 {
+			y(cnt)--
+		} else : if updown(cnt) == 1 {
+			y(cnt)++
+		}
+		if x(cnt) >= screen_x {
+			face(cnt) = 2
+		}
+		if x(cnt) <= 0 {
+			face(cnt) = 1
+		}
+		if y(cnt) <= 0 {
+			updown(cnt) = 1
+		}
+		if y(cnt) >= screen_y {
+			updown(cnt) = 0
+		}
+	loop
+	fps = d3getfps()
+	if count >= 100 {
+		if qmode == "On" {
+			score = fps*298
+			count = 400
+		}
+		score+=fps
+	}
+	if max == 100 {
+		log = "Test "+max+": "+score+"\n"
+	} else : if max == 500 {
+		log = "Test 100: "+score1+"\nTest "+max+": "+score+"\n"
+	} else : if max == 1000 {
+		log = "Test 100: "+score1+"\n"+"Test 500: "+score2+"\nTest "+max+": "+score+"\n"
+	} else : if max == 5000 {
+		log = "Test 100: "+score1+"\n"+"Test 500: "+score2+"\n"+"Test 1000: "+score3+"\nTest "+max+": "+score+"\n"
+	} else : if max == 10000 {
+		log = "Test 100: "+score1+"\n"+"Test 500: "+score2+"\n"+"Test 1000: "+score3+"\n"+"Test 5000: "+score4+"\nTest "+max+": "+score+"\n"
+	} else : if max == 20000 {
+		log = "Test 100: "+score1+"\n"+"Test 500: "+score2+"\n"+"Test 1000: "+score3+"\n"+"Test 5000: "+score4+"\n"+"Test 10000: "+score5+"\nTest "+max+": "+score+"\n"
+	}
+	objprm 0, log
+	if count == 400 {
+		if max == 100 {
+			score1 = score
+		} else : if max == 500 {
+			score2 = score
+		} else : if max == 1000 {
+			score3 = score
+		} else : if max == 5000 {
+			score4 = score
+		} else : if max == 10000 {
+			score5 = score
+		} else : if max == 20000 {
+			score6 = score
+			total = (score1+score2+score3+score4+score5+score6)/6
+			INISet "Score","100",""+score1
+			INISet "Score","500",""+score2
+			INISet "Score","1000",""+score3
+			INISet "Score","5000",""+score4
+			INISet "Score","10000",""+score5
+			INISet "Score","20000",""+score6
+			INISet "Param","Next","ended"
+			public_key = ""+(score1+score2+score3+score4+score5+score6+1)
+			ob public_key
+			INISet "Param","Alg",""+refstr
+			exec "Benchmark.exe", 0, "open"
+			end
+		}
+		goto *render
+	}
+	goto *rend
