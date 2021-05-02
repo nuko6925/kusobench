@@ -1,5 +1,3 @@
-#packopt runtime "hsp3mt.hrt"
-#runtime "hsp3mt"
 #include "MODULE_inim2.hsp"
 #include "EncryptApi.hsp"
 #include "hsp3utf.as"
@@ -27,6 +25,9 @@ resolutions = 3
 created = 0
 screen_x = ginfo(20)
 screen_y = ginfo(21)
+qmode = "Off"
+freq = 0
+fr = "0"
 
 exist "Log.ini"
 if strsize == -1 {
@@ -38,6 +39,7 @@ if strsize == -1 {
 	INISet "Param","res-c","4"
 	INISet "Param","res-x",""+ginfo(20)
 	INISet "Param","res-y",""+ginfo(21)
+	INISet "Param","quick","Off"
 	await 1000
 	exec "Benchmark.exe", 0, "open"
 	end
@@ -56,6 +58,18 @@ if strsize == -1 {
 	if INIGet("Param","res-c"){resolutions = int(refstr)} else {INISet "Param","res-c","3" : INISet "Param","res-x","1920" : INISet "Param","res-y","1080"}
 	if INIGet("Param","res-x"){screen_x = int(refstr)}
 	if INIGet("Param","res-y"){screen_y = int(refstr)}
+	if INIGet("Param","quick"){qmode = refstr} else {INISet "Param","quick","Off"}
+	if INIGet("Param","freq"){fr = refstr}
+}
+_sc = ((score1+score2+score3+score4+score5+score6)/6)
+deob fr
+freq = int(refstr)
+if freq >= 1 {
+	clock = double(freq) / double(1000.0)
+	ipc = double(_sc) / double(clock)
+	ipf = strf("%3.2f /F", ipc)
+} else {
+	ipf = "$Not Supported /F"
 }
 if screen_x <= 0 {
 	screen_x = 1920
@@ -74,10 +88,8 @@ if user != null {
 	if strlen(user) > 16 {
 		user = "お前"
 	}
-	passgen user
-	if refstr != pass {
-		user = "お前"
-	}
+} else {
+	user = "お前"
 }
 color : boxf
 color 255, 255, 255
@@ -95,6 +107,8 @@ if nex == 0 {
 	objsize 75, 30
 	pos 600-95, 670
 	button goto "ReRun", *rerun
+	pos 600-190, 670
+	button goto "Quick: "+qmode, *quick
 	pos ginfo(12)-95, 630 : button goto "Option", *option
 	nex = 30000
 }
@@ -177,7 +191,8 @@ sysfont
 color : boxf 600, 5, ginfo(12), ginfo(13)-5
 color 100, 100, 100 : boxf 605, 5, ginfo(12)-5, ginfo(13)-5
 half = (ginfo(13)-10)/2
-color 255, 255, 255 : line 605, half+5, ginfo(12)-125, half+5
+color 128, 128, 128 : line 605, half+5, ginfo(12)-125, half+5
+color 255, 255, 255
 pos ginfo(12)-120, half : mes "100000"
 pos ginfo(12)-120, ginfo(13)-25 : mes "0"
 pos ginfo(12)-120, 5 : mes "200000"
@@ -192,7 +207,7 @@ if ver == "VALID" {
 	font "Arial", 128, 19
 	color 255, 154, 132 : pos 630, ginfo(13)-200 : mes "INVALID"
 }
-sysfont
+font "Arial", 16, 1
 //Dev's PC
 res = screen_x
 orig_score = 0
@@ -224,13 +239,15 @@ if res == 2560 {
 x1 = double(orig_score.0)/double(200000.0)
 y1 = (double(710)*x1)
 z1 = (710-int(y1))+5
+fp = double(orig_score) / double(3.5)
+fpc = strf("%3.2f /F", fp)
 
 color 128, 0, 0 : boxf 700, z1, 750, ginfo(13)-5
 line 605, z1, ginfo(12)-126, z1
 if res == 1 {
-	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\nMode: CLI"
+	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-44 : line 800, z1-44, 810, z1-44 : pos 815, z1-54 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+fpc+"\nMode: CLI"
 } else {
-	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-50 : line 800, z1-50, 810, z1-50 : pos 815, z1-60 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+res+"px"
+	color : line 699, z1, 775, z1 : line 775, z1, 800, z1-44 : line 800, z1-44, 810, z1-44 : pos 815, z1-54 : mes "このベンチ作った奴のPC\n"+orig_score+"\n"+fpc+"\n"+res+"px"
 }
 
 //User's PC
@@ -241,9 +258,9 @@ z2 = (710-int(y2))+5
 color 0, 255, 0 : boxf 950, z2, 1000, ginfo(13)-5
 line 605, z2, ginfo(12)-126, z2
 if user != null {
-	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-30 : line 1050, z2-30, 1060, z2-30 : pos 1065, z2-40 : mes ""+user+"のPC\n"+((score1+score2+score3+score4+score5+score6)/6)
+	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-26 : line 1050, z2-26, 1060, z2-26 : pos 1065, z2-36 : mes ""+user+"のPC\n"+((score1+score2+score3+score4+score5+score6)/6)+"\n"+ipf
 } else {
-	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-30 : line 1050, z2-30, 1060, z2-30 : pos 1065, z2-40 : mes "お前のPC\n"+((score1+score2+score3+score4+score5+score6)/6)
+	color : line 949, z2, 1025, z2 : line 1025, z2, 1050, z2-26 : line 1050, z2-26, 1060, z2-26 : pos 1065, z2-36 : mes "お前のPC\n"+((score1+score2+score3+score4+score5+score6)/6)+"\n"+ipf
 }
 //
 if nex == 100 {
@@ -303,7 +320,7 @@ stop
 		color 59, 59, 59 : boxf
 		objsize 1280, 720
 		pos 0, 34
-		listbox resolutions, 100, "15360x8640(16K)\n7680x4320(8K)\n3840x2160(4K)\n2560x1440(WQHD)\n1920x1080(FHD)\n1280x720(HD)\n800x600(SVGA)\n720x480(SD)\n640x480(VGA)\n480x320(HVGA)\n320x240(QVGA)\n160x120(QQVGA)\nCommand Line Interface(CLI)"
+		listbox resolutions, 100, "15360x8640(16K)\n7680x4320(8K)\n3840x2160(4K)\n2560x1440(WQHD)\n1920x1080(FHD)\n1280x720(HD)\n800x600(SVGA)\n720x480(SD)\n640x480(VGA)\n480x320(HVGA)\n320x240(QVGA)\n160x120(QQVGA)\nCommand Line Interface(CLI)\n"+ginfo(20)+"x"+ginfo(21)+"(Native)"
 		objsize 75, 30
 		pos 5, 5 : button goto "Cancel", *cancel
 		pos 1280-95, 5 : button goto "Save", *save
@@ -371,7 +388,21 @@ stop
 		res_x = 1
 		res_y = 1
 	}
+	if resolutions == 13 {
+		res_x = ginfo(20)
+		res_y = ginfo(21)
+	}
 	
 	INISet "Param","res-x",""+res_x
 	INISet "Param","res-y",""+res_y
 	INISet "Param","res-c",""+resolutions
+	stop
+*quick
+	if qmode == "Off" {
+		qmode = "On"
+		INISet "Param","quick","On"
+	} else {
+		qmode = "Off"
+		INISet "Param","quick","Off"
+	}
+	objprm 1, "Quick: "+qmode
