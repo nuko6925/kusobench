@@ -9,6 +9,11 @@
 #define  CR     "\n"
 dimtype orig, vartype("str"), 999
 dimtype sco, vartype("int"), 999
+test1 = "0"
+test2 = "0"
+test3 = "0"
+test4 = "0"
+place = -1
 size = 0
 search = ""
 hit = 0
@@ -26,6 +31,10 @@ if strsize == -1 {
 	if INIGet("Param","res-x"){screen_x = int(refstr)}
 	if INIGet("Param","res-y"){screen_y = int(refstr)}
 	if INIGet("Param","adblock"){adblock = refstr} else {INISet "Param","adblock","0"}
+	if INIGet("Score","100"){test1 = refstr}
+	if INIGet("Score","500"){test2 = refstr}
+	if INIGet("Score","1000"){test3 = refstr}
+	if INIGet("Score","5000"){test4 = refstr}
 }
 if screen_x == 1 {
 	title "KusoBench Ranking (CLI)"
@@ -44,6 +53,7 @@ pos 86, 6
 input search, 512, 24, 0
 onkey *searching
 *main
+place = -1
 api_url = "https://xn--8dr019o.monster/api/kusobench/?do=getscore&display_x="+screen_x+"&display_y="+screen_y+"&rows=999"
 Get_Req(api_url)
 console = console+"Connecting...\n"
@@ -59,6 +69,7 @@ repeat (stat-1)
 	if cnt >= 1 {
 		ram = int(double(body(2)) + 0.5)
 		processor = str_replace("%20", " ", body(1))
+		os = str_replace("%20", " ", body(3))
 		cpu = str_replace("            ", "", processor)
 		cpu = str_replace("         ", "", cpu)
 		val = instr(cpu, , "___")
@@ -68,7 +79,7 @@ repeat (stat-1)
 			user = "Unknown"
 		}
 		ram = int(double(body(2)) + 0.5)
-		console = console+"#"+cnt+" "+cpu+" |  RAM "+ram+"GB\n"
+		console = console+"#"+cnt+" "+cpu+" |  RAM "+ram+"GB | "+os+"\n"
 		score = int(body(11))
 		x1 = double(score)/double(200000.0)
 		y1 = x1*double(100.0)
@@ -80,9 +91,31 @@ repeat (stat-1)
 		graph = graph+"   ("+body(11)+")"+"\nUser: "+user+"\n\n"
 		console = console+graph
 		objprm 0, console
-		tmp = "#"+cnt+" "+cpu+" |  RAM "+ram+"GB\n"+graph
+		tmp = "#"+cnt+" "+cpu+" |  RAM "+ram+"GB | "+os+"\n"+graph
 		orig(cnt-1) = tmp
 		sco(cnt-1) = score
+		if body(6) == test1 {
+			if body(7) == test2 {
+				if body(8) == test3 {
+					if body(9) == test4 {
+						place = cnt
+					}
+				}
+			}
+		}
+		if place != -1 {
+			if screen_x == 1 {
+				title "KusoBench Ranking (CLI) - You placed #"+place
+			} else {
+				title "KusoBench Ranking ("+screen_x+"x"+screen_y+") - You placed #"+place
+			}
+		} else {
+			if screen_x == 1 {
+				title "KusoBench Ranking (CLI)"
+			} else {
+				title "KusoBench Ranking ("+screen_x+"x"+screen_y+")"
+			}
+		}
 	}
 loop
 pos 1200, 680
