@@ -7,6 +7,11 @@
 #define  CRLF   "\r\n"
 #define  LF     "\r"
 #define  CR     "\n"
+dimtype orig, vartype("str"), 999
+dimtype sco, vartype("int"), 999
+size = 0
+search = ""
+hit = 0
 randomize
 screen_x = ginfo(20)
 screen_y = ginfo(21)
@@ -30,8 +35,14 @@ if screen_x == 1 {
 	console = "KusoBench Ranking ("+screen_x+"x"+screen_y+")\n"
 }
 screen 0, 1280, 720
-color 59, 59, 59 : boxf
-mesbox console, 1150, 720, 4
+color 63, 63, 63 : boxf
+pos 0, 35
+mesbox console, 1150, 690, 4
+pos 15, 6 : color 255, 255, 255
+mes "Search: "
+pos 86, 6
+input search, 512, 24, 0
+onkey *searching
 *main
 api_url = "https://xn--8dr019o.monster/api/kusobench/?do=getscore&display_x="+screen_x+"&display_y="+screen_y+"&rows=999"
 Get_Req(api_url)
@@ -43,6 +54,7 @@ repeat (stat-1)
 	split head(cnt), ",", body
 	if cnt == 0 {
 		console = console+"Number of data: "+head(0)+"\n"
+		size = int(head(0))
 	}
 	if cnt >= 1 {
 		ram = int(double(body(2)) + 0.5)
@@ -55,7 +67,8 @@ repeat (stat-1)
 		} else {
 			user = "Unknown"
 		}
-		console = console+"#"+cnt+" "+cpu+"\n"
+		ram = int(double(body(2)) + 0.5)
+		console = console+"#"+cnt+" "+cpu+" |  RAM "+ram+"GB\n"
 		score = int(body(11))
 		x1 = double(score)/double(200000.0)
 		y1 = x1*double(100.0)
@@ -67,6 +80,9 @@ repeat (stat-1)
 		graph = graph+"   ("+body(11)+")"+"\nUser: "+user+"\n\n"
 		console = console+graph
 		objprm 0, console
+		tmp = "#"+cnt+" "+cpu+" |  RAM "+ram+"GB\n"+graph
+		orig(cnt-1) = tmp
+		sco(cnt-1) = score
 	}
 loop
 pos 1200, 680
@@ -78,6 +94,56 @@ if screen_x == 1 {
 	button ""+screen_x+"x"+screen_y, *res
 }
 stop
+*searching
+	if search == "" {
+		console = "Number of data: "+size+"\n"
+		repeat size
+			console = console+orig(cnt)
+		color 63, 63, 63 : boxf 600, 6, 800, 34 : color 255, 255, 255
+		pos 600, 6 : mes ""+size+" Hits"
+		loop
+		objprm 0, console
+	} else {
+		console = "Searching...\n"
+		hit = 0
+		val = instr(search, , "score<")
+		if val != -1 {
+			split search, "<", cmd, word
+			wsco = int(word)
+			repeat size
+				if sco(cnt) < wsco {
+					hit++
+					console = console+orig(cnt)
+				}
+			loop
+		}
+		val = instr(search, , "score>")
+		if val != -1 {
+			split search, ">", cmd, word
+			wsco = int(word)
+			repeat size
+				if sco(cnt) > wsco {
+					hit++
+					console = console+orig(cnt)
+				}
+			loop
+		} else {
+			repeat size
+				val = instr(orig(cnt), , search)
+				if val != -1 {
+					hit++
+					console = console+orig(cnt)
+				}
+			loop
+			}
+		if hit == 0 {
+			console = console+"No hits on search."
+		}
+		objprm 0, console
+		color 63, 63, 63 : boxf 600, 6, 800, 34 : color 255, 255, 255
+		pos 600, 6 : mes ""+hit+" Hits"
+	}
+	stop
 *download
 	ram = 0
 	processor = ""
@@ -89,8 +155,8 @@ stop
 	graph = ""
 	api_url = ""
 	result = ""
-	clrobj 1
 	clrobj 2
+	clrobj 3
 	if screen_x == 1 {
 		console = "KusoBench Ranking (CLI)\n"
 		title "KusoBench Ranking (CLI)"
@@ -158,9 +224,9 @@ stop
 		screen_y = 1080
 	}
 	if screen_x == 1 {
-		objprm 2, "CLI"
+		objprm 3, "CLI"
 	} else {
-		objprm 2, ""+screen_x+"x"+screen_y
+		objprm 3, ""+screen_x+"x"+screen_y
 	}
 	stop
 *exit
