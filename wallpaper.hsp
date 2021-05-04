@@ -136,16 +136,16 @@ gsel 0, 2
 		}*/
 		hsvcolor c(cnt), value, value : circle x(cnt)-5, y(cnt)-5, x(cnt)+5, y(cnt)+5
 //		pos x(cnt), y(cnt)+5 : mes "ID: "+cnt+"\nFacing: "+face(cnt)+"\nOffset: "+off(cnt)+"\nX: "+x(cnt)
-		if x(cnt) >= ginfo(12) {
+		if x(cnt)+5 >= ginfo(12) {
 			face(cnt) = 2
 		}
-		if x(cnt) <= 0 {
+		if x(cnt)-5 <= 0 {
 			face(cnt) = 1
 		}
-		if y(cnt) <= 0 {
+		if y(cnt)-5 <= 0 {
 			updown(cnt) = 1
 		}
-		if y(cnt) >= ginfo(13) {
+		if y(cnt)+5 >= ginfo(13) {
 			updown(cnt) = 0
 		}
 	loop
