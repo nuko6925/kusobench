@@ -115,60 +115,60 @@ if nex == 0 {
 color 255, 255, 255
 if nex == 100 {
 	color 247, 165, 0
-	pos 30, 30 : mes "Test1: running..."
+	pos 30, 27 : mes "Test1: running..."
 } else {
 	color 0, 255, 0
-	pos 30, 30 : mes "Test1: "+strf("%7d", score1)
+	pos 30, 27 : mes "Test1: "+strf("%7d", score1)
 }
 if nex == 500 {
 	color 247, 165, 0
-	pos 30, 128 : mes "Test2: running..."
+	pos 30, 125 : mes "Test2: running..."
 } else {
 	if nex <= 100 {
 		color 0, 230, 230
-		pos 30, 128 : mes "Test2: waiting..."
+		pos 30, 125 : mes "Test2: waiting..."
 	} else {
 		color 0, 255, 0
-		pos 30, 128 : mes "Test2: "+strf("%7d", score2)
+		pos 30, 125 : mes "Test2: "+strf("%7d", score2)
 	}
 }
 if nex == 1000 {
 	color 247, 165, 0
-	pos 30, 226 : mes "Test3: running..."
+	pos 30, 223 : mes "Test3: running..."
 } else {
 	if nex <= 500 {
 		color 0, 230, 230
-		pos 30, 226 : mes "Test3: waiting..."
+		pos 30, 223 : mes "Test3: waiting..."
 	} else {
 		color 0, 255, 0
-		pos 30, 226 : mes "Test3: "+strf("%7d", score3)
+		pos 30, 223 : mes "Test3: "+strf("%7d", score3)
 	}
 }
 if nex == 5000 {
 	color 247, 165, 0
-	pos 30, 324 : mes "Test4: running..."
+	pos 30, 321 : mes "Test4: running..."
 } else {
 	if nex <= 1000 {
 		color 0, 230, 230
-		pos 30, 324 : mes "Test4: waiting..."
+		pos 30, 321 : mes "Test4: waiting..."
 	} else {
 		color 0, 255, 0
-		pos 30, 324 : mes "Test4: "+strf("%7d", score4)
+		pos 30, 321 : mes "Test4: "+strf("%7d", score4)
 	}
 }
 if nex == 10000 {
 	color 247, 165, 0
-	pos 30, 422 : mes "Test5: running..."
+	pos 30, 419 : mes "Test5: running..."
 } else : if nex == 20000 {
 	color 247, 165, 0
-	pos 30, 422 : mes "Test5: running..."
+	pos 30, 419 : mes "Test5: running..."
 } else {
 	if nex <= 5000 {
 		color 0, 230, 230
-		pos 30, 422 : mes "Test5: waiting..."
+		pos 30, 419 : mes "Test5: waiting..."
 	} else {
 		color 0, 255, 0
-		pos 30, 422 : mes "Test5: "+strf("%7d", score5+score6)
+		pos 30, 419 : mes "Test5: "+strf("%7d", score5+score6)
 	}
 }
 //mes "Test6: "+score6
